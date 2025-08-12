@@ -121,7 +121,7 @@ const MissionFormPage = () => {
 
   const closeModal = () => {
     setShowSuccessModal(false);
-    navigate("/all-missions"); // ✅ Navigate after closing modal
+    navigate("/missions"); // ✅ Navigate after closing modal
   };
 
   return (

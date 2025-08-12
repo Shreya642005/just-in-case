@@ -1,40 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import Navbar from "@/components/Navbar";
-
-// ✅ Fix Leaflet marker icon paths
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png",
-});
-
-// 📌 Component to auto-fit map bounds based on markers
-function FitBounds({ missions }) {
-  const map = useMap();
-  useEffect(() => {
-    if (missions.length) {
-      const bounds = L.latLngBounds(missions.map(m => [m.latitude, m.longitude]));
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [missions, map]);
-  return null;
-}
+import React, { useEffect, useState } from "react";
+import MissionMap from "@/components/MissionMap";
 
 export default function MapViewPage() {
   const [missions, setMissions] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/missions") // 🔹 Change if backend is on a different URL
+    fetch("http://localhost:5000/api/missions")
       .then((res) => res.json())
       .then((data) => {
-        const cleaned = data.map(m => ({
+        const cleaned = data.map((m) => ({
           ...m,
           latitude: Number(m.latitude),
-          longitude: Number(m.longitude)
+          longitude: Number(m.longitude),
         }));
         setMissions(cleaned);
       })
@@ -43,7 +20,6 @@ export default function MapViewPage() {
 
   return (
     <div className="min-h-screen bg-[#151414] text-white relative">
-      {/* Background visuals */}
       <img
         src="/images/BackgroundLogo.png"
         alt="Background Logo"
@@ -66,39 +42,8 @@ export default function MapViewPage() {
       </header>
 
       <main className="relative z-10 flex justify-center items-center pt-8 pb-20">
-        <div className="w-full md:w-3/4 h-[500px] rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(255,0,0,0.3)] border border-red-700">
-          <MapContainer
-            center={[20, 0]} // Initial placeholder center
-            zoom={2}
-            scrollWheelZoom
-            className="h-full w-full z-0"
-          >
-            <TileLayer
-              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-            />
-
-            {/* Auto fit bounds when markers load */}
-            <FitBounds missions={missions} />
-
-            {/* Render mission markers */}
-            {missions.map((mission) => (
-              <Marker
-                key={mission._id}
-                position={[mission.latitude, mission.longitude]}
-              >
-                <Popup>
-                  <div className="text-sm text-white bg-[#1e1e1e] p-3 rounded-lg shadow-md">
-                    <h3 className="text-lg font-bold text-red-400">{mission.missionTitle}</h3>
-                    <p className="mb-2">{mission.fullDescription}</p>
-                    <p><strong>Date:</strong> {mission.date}</p>
-                    <p><strong>Time:</strong> {mission.time || "N/A"}</p>
-                    <p><strong>Place:</strong> {mission.place}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+        <div className="w-full md:w-3/4">
+          <MissionMap missions={missions} />
         </div>
       </main>
     </div>

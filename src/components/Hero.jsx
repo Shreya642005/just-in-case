@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Hero = ({ scrollToAbout, scrollToMissions }) => {
   const [scrollY, setScrollY] = useState(0);
   const [footerTop, setFooterTop] = useState(Infinity);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const footer = document.getElementById("footer");
@@ -68,7 +70,7 @@ const Hero = ({ scrollToAbout, scrollToMissions }) => {
               alt="web left"
             />
             <button
-              onClick={scrollToMissions}
+              onClick={() => navigate('/new-mission')}
               className="bg-[#213A8F] text-white px-6 py-2 font-bold uppercase text-sm shadow-md hover:bg-[#1a2f70] transition"
             >
               NEW MISSION LOG
@@ -81,7 +83,7 @@ const Hero = ({ scrollToAbout, scrollToMissions }) => {
               alt="web right"
             />
             <button
-              onClick={scrollToAbout}
+              onClick={() => navigate('/missions')}
               className="border border-red-600 text-white px-6 py-2 font-bold uppercase text-sm hover:bg-red-600 transition"
             >
               VIEW ARCHIVES
