@@ -31,14 +31,14 @@ export default function AllMissionsPage() {
         if (!res.ok) {
           throw new Error(`Failed to fetch missions: ${res.statusText}`);
         }
-                 const data = await res.json();
-         setMissions(
-           data.map((m) => ({
-             ...m,
-             // Normalize description so cards show shortDescription
-             description: m.shortDescription || m.description || m.fullDescription || "",
-           }))
-         );
+        const data = await res.json();
+        setMissions(
+          data.map((m) => ({
+            ...m,
+            // Normalize description so cards show shortDescription
+            description: m.shortDescription || m.description || m.fullDescription || "",
+          }))
+        );
       } catch (err) {
         console.error("Error fetching missions:", err);
         setError(err.message);
@@ -210,21 +210,21 @@ export default function AllMissionsPage() {
                 className="mission-card-wrapper"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                                 <MissionCard
-                   mission={mission}
-                   isHighlighted={mission._id === selectedMissionId}
-                   onClick={() => setSelectedMissionId(mission._id)}
-                 />
-                 <Button
-                   onClick={() => {
-                     if (window.confirm("Delete this mission? This cannot be undone.")) {
-                       deleteMission(mission._id);
-                     }
-                   }}
-                   className="mt-2 w-full bg-red-700 hover:bg-red-800 text-white"
-                 >
-                   Delete Mission
-                 </Button>
+                <MissionCard
+                  mission={mission}
+                  isHighlighted={mission._id === selectedMissionId}
+                  onClick={() => setSelectedMissionId(mission._id)}
+                />
+                <Button
+                  onClick={() => {
+                    if (window.confirm("Delete this mission? This cannot be undone.")) {
+                      deleteMission(mission._id);
+                    }
+                  }}
+                  className="mt-2 w-full bg-red-700 hover:bg-red-800 text-white"
+                >
+                  Delete Mission
+                </Button>
               </div>
             ))}
           </div>

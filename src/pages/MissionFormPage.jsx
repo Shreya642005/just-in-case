@@ -19,7 +19,7 @@ const MissionFormPage = () => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // ✅ Added
 
   const validateForm = () => {
     const newErrors = {};
@@ -89,15 +89,14 @@ const MissionFormPage = () => {
           place: formData.place,
           fullDescription: formData.fullDescription,
           imageUrl: formData.image ? formData.image.name : null,
-          latitude: formData.latitude ,
+          latitude: formData.latitude,
           longitude: formData.longitude,
         }),
       });
 
       if (!response.ok) throw new Error("Failed to save mission");
 
-      alert("Mission logged successfully!");
-      navigate("/all-missions");
+      setShowSuccessModal(true); // ✅ Show success modal instead of alert
 
       setFormData({
         missionTitle: "",
@@ -120,7 +119,10 @@ const MissionFormPage = () => {
     }
   };
 
-
+  const closeModal = () => {
+    setShowSuccessModal(false);
+    navigate("/all-missions"); // ✅ Navigate after closing modal
+  };
 
   return (
     <div className="mission-form-container bg-[#151414] min-h-screen pt-24 relative">
@@ -388,6 +390,22 @@ const MissionFormPage = () => {
         </div>
       </div>
 
+      {/* ✅ Success Modal */}
+      {showSuccessModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">✅</div>
+            <h3 className="modal-title">Mission Logged Successfully!</h3>
+            <p className="modal-message">
+              Your mission has been added to the Web-Crawler Database. Great
+              work, Spider-Man!
+            </p>
+            <button onClick={closeModal} className="modal-close-button">
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
