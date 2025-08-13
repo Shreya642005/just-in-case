@@ -2,28 +2,21 @@
 
 import { useState, useEffect, useMemo } from "react";
 import MissionCard from "@/components/MissionCard";
-import MissionFilters from "@/components/MissionFilters";
 import MissionMap from "@/components/MissionMap";
 import MissionNotification from "@/components/MissionNotification";
 import { Button } from "@/components/ui/Button";
-import { Plus, Zap, Trash2 } from "lucide-react";
+import { Zap, Trash2 } from "lucide-react";
 
 export default function AllMissionsPage() {
   const [missions, setMissions] = useState([]);
-  const [filters, setFilters] = useState({
-    urgency: "all",
-    status: "completed",
-    area: "all",
-    sortBy: "date",
-    sortOrder: "desc",
-  });
+  const [sortOrder, setSortOrder] = useState("desc"); // Only keep newest/oldest
   const [viewMode, setViewMode] = useState("cards");
   const [selectedMissionId, setSelectedMissionId] = useState(null);
   const [newMissionNotification, setNewMissionNotification] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch missions from MongoDB Atlas via backend API
+  // Fetch missions
   useEffect(() => {
     const fetchMissions = async () => {
       try {
@@ -35,8 +28,8 @@ export default function AllMissionsPage() {
         setMissions(
           data.map((m) => ({
             ...m,
-            // Normalize description so cards show shortDescription
-            description: m.shortDescription || m.description || m.fullDescription || "",
+            description:
+              m.shortDescription || m.description || m.fullDescription || "",
           }))
         );
       } catch (err) {
@@ -50,43 +43,26 @@ export default function AllMissionsPage() {
     fetchMissions();
   }, []);
 
+  // Filter only completed & sort
   const filteredMissions = useMemo(() => {
     if (!missions.length) return [];
 
-    const filtered = missions
-      // only completed missions should be shown
-      .filter((mission) => (mission.status || "completed").toLowerCase() === "completed")
-      // apply UI filters on top
-      .filter((mission) => {
-        if (filters.urgency !== "all" && mission.urgency !== filters.urgency) return false;
-        if (filters.status !== "all" && mission.status !== filters.status) return false;
-        if (filters.area !== "all" && mission.area !== filters.area) return false;
-        return true;
-      });
+    const filtered = missions.filter(
+      (mission) => (mission.status || "completed").toLowerCase() === "completed"
+    );
 
     filtered.sort((a, b) => {
-      let comparison = 0;
-      switch (filters.sortBy) {
-        case "date":
-          comparison = new Date(a.date + " " + a.time).getTime() - new Date(b.date + " " + b.time).getTime();
-          break;
-        case "urgency":
-          const urgencyOrder = { low: 1, medium: 2, high: 3, critical: 4 };
-          comparison = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-          break;
-        case "area":
-          comparison = a.area?.localeCompare?.(b.area || "") || 0;
-          break;
-        default:
-          comparison = 0;
-      }
-      return filters.sortOrder === "desc" ? -comparison : comparison;
+      let comparison =
+        new Date(a.date + " " + a.time).getTime() -
+        new Date(b.date + " " + b.time).getTime();
+      return sortOrder === "desc" ? -comparison : comparison;
     });
 
     return filtered;
-  }, [missions, filters]);
+  }, [missions, sortOrder]);
 
-  const activeMissionsCount = missions.filter((m) => (m.status || "completed").toLowerCase() === "active").length;
+  // ✅ Corrected to count completed missions shown on page
+  const completedMissionsCount = filteredMissions.length;
 
   const handleMissionSelect = (mission) => {
     setSelectedMissionId(mission._id);
@@ -101,10 +77,11 @@ export default function AllMissionsPage() {
     }, 100);
   };
 
-  // Delete single mission from MongoDB
   const deleteMission = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/missions/${id}`, { method: "DELETE" });
+      const res = await fetch(`http://localhost:5000/api/missions/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         throw new Error("Failed to delete mission");
       }
@@ -114,10 +91,11 @@ export default function AllMissionsPage() {
     }
   };
 
-  // Clear all missions from MongoDB
   const clearAllMissions = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/missions`, { method: "DELETE" });
+      const res = await fetch(`http://localhost:5000/api/missions`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         throw new Error("Failed to clear missions");
       }
@@ -170,36 +148,49 @@ export default function AllMissionsPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="w-6 h-6 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
               </svg>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-white">All Missions</h1>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white">
+              All Missions
+            </h1>
           </div>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            Your friendly neighborhood mission control center. Track, monitor, and manage all Spider-Man operations
-            across New York City.
+            Your friendly neighborhood mission control center. Track, monitor,
+            and manage all Spider-Man operations across New York City.
           </p>
 
           <div className="mt-6 flex items-center justify-center gap-4 flex-wrap">
-            <div className="bg-red-600/20 border border-red-500/30 rounded-lg px-4 py-2 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-red-400" />
-              <span className="text-red-400 font-medium">🕸️ {activeMissionsCount} active missions...</span>
+            <div className="bg-green-600/20 border border-green-500/30 rounded-lg px-4 py-2 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-green-400" />
+              <span className="text-green-400 font-medium">
+                 {completedMissionsCount} completed missions
+              </span>
             </div>
-            <Button onClick={clearAllMissions} className="bg-gray-700 hover:bg-gray-800 text-white">
+
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 z-50 relative"
+            >
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+
+            <Button
+              onClick={clearAllMissions}
+              className="bg-gray-700 hover:bg-gray-800 text-white"
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Clear All Missions
             </Button>
           </div>
         </div>
-
-        <MissionFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          totalMissions={filteredMissions.length}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
 
         {viewMode === "cards" ? (
           <div className="missions-grid grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -217,7 +208,11 @@ export default function AllMissionsPage() {
                 />
                 <Button
                   onClick={() => {
-                    if (window.confirm("Delete this mission? This cannot be undone.")) {
+                    if (
+                      window.confirm(
+                        "Delete this mission? This cannot be undone."
+                      )
+                    ) {
                       deleteMission(mission._id);
                     }
                   }}
@@ -239,17 +234,28 @@ export default function AllMissionsPage() {
         {filteredMissions.length === 0 && (
           <div className="empty-state text-center py-12">
             <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-12 h-12 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="w-12 h-12 text-gray-600"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No missions found</h3>
-            <p className="text-gray-400">Try adjusting your filters or add a new mission.</p>
+            <h3 className="text-xl font-bold text-white mb-2">
+              No missions found
+            </h3>
+            <p className="text-gray-400">
+              Try adding a new mission to see it here.
+            </p>
           </div>
         )}
       </div>
 
-      <MissionNotification mission={newMissionNotification} onClose={() => setNewMissionNotification(null)} />
+      <MissionNotification
+        mission={newMissionNotification}
+        onClose={() => setNewMissionNotification(null)}
+      />
     </div>
   );
 }
