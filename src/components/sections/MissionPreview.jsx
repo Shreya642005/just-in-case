@@ -1,27 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, MapPin, Calendar } from 'lucide-react';
 
 const MissionPreview = () => {
-  const previewMissions = [
-    {
-      id: 1,
-      title: "Bank Robbery Intervention",
-      status: "completed",
-      urgency: "high",
-      date: "2023-11-15",
-      location: "Manhattan"
-    },
-    {
-      id: 2,
-      title: "Rhino Rampage",
-      status: "active",
-      urgency: "critical",
-      date: "2023-11-16",
-      location: "Queens"
-    }
-  ];
+  const [missions, setMissions] = useState([]);
+
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/missions');
+        if (!res.ok) throw new Error('Failed to fetch missions');
+        const data = await res.json();
+        setMissions(data);
+      } catch (e) {
+        console.error('Failed to load recent missions:', e);
+      }
+    };
+    fetchRecent();
+  }, []);
+
+  const previewMissions = useMemo(() => {
+    const sorted = [...missions].sort((a, b) => {
+      const aPrimary = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bPrimary = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const aFallback = new Date(`${a.date || ''} ${a.time || ''}`).getTime() || 0;
+      const bFallback = new Date(`${b.date || ''} ${b.time || ''}`).getTime() || 0;
+      const aTs = aPrimary || aFallback;
+      const bTs = bPrimary || bFallback;
+      return bTs - aTs; // newest first
+    });
+    return sorted.slice(0, 2).map((m) => ({
+      id: m._id,
+      title: m.missionTitle || m.title || 'Untitled Mission',
+      status: (m.status || 'completed').toLowerCase(),
+      urgency: m.urgency || 'high',
+      date: m.date || 'Unknown',
+      location: m.place || m.location || 'Unknown',
+    }));
+  }, [missions]);
 
   return (
     <section className="min-h-screen py-20 relative">

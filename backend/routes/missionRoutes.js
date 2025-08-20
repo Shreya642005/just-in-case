@@ -23,4 +23,28 @@ router.get("/", async (req, res) => {
   }
 });
 
+// DELETE a mission by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Mission.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Mission not found" });
+    }
+    return res.json({ message: "Mission deleted", id });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE all missions
+router.delete("/", async (_req, res) => {
+  try {
+    const result = await Mission.deleteMany({});
+    return res.json({ message: "All missions cleared", deletedCount: result.deletedCount });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

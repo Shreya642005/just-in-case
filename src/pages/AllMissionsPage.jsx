@@ -5,6 +5,7 @@ import MissionCard from "@/components/MissionCard";
 import MissionMap from "@/components/MissionMap";
 import MissionNotification from "@/components/MissionNotification";
 import { Button } from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Zap, Trash2 } from "lucide-react";
 
 export default function AllMissionsPage() {
@@ -15,6 +16,7 @@ export default function AllMissionsPage() {
   const [newMissionNotification, setNewMissionNotification] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
+  const [confirmState, setConfirmState] = useState({ open: false, action: null, payload: null });
 
   // Fetch missions
   useEffect(() => {
@@ -183,7 +185,13 @@ export default function AllMissionsPage() {
             </select>
 
             <Button
-              onClick={clearAllMissions}
+              onClick={() =>
+                setConfirmState({
+                  open: true,
+                  action: "clearAll",
+                  payload: null,
+                })
+              }
               className="bg-gray-700 hover:bg-gray-800 text-white"
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -207,15 +215,13 @@ export default function AllMissionsPage() {
                   onClick={() => setSelectedMissionId(mission._id)}
                 />
                 <Button
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Delete this mission? This cannot be undone."
-                      )
-                    ) {
-                      deleteMission(mission._id);
-                    }
-                  }}
+                  onClick={() =>
+                    setConfirmState({
+                      open: true,
+                      action: "deleteOne",
+                      payload: mission._id,
+                    })
+                  }
                   className="mt-2 w-full bg-red-700 hover:bg-red-800 text-white"
                 >
                   Delete Mission
@@ -255,6 +261,28 @@ export default function AllMissionsPage() {
       <MissionNotification
         mission={newMissionNotification}
         onClose={() => setNewMissionNotification(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={
+          confirmState.action === "clearAll"
+            ? "Clear all missions?"
+            : "Delete this mission?"
+        }
+        description="This action cannot be undone."
+        confirmText={confirmState.action === "clearAll" ? "Clear All" : "Delete"}
+        cancelText="Cancel"
+        onCancel={() => setConfirmState({ open: false, action: null, payload: null })}
+        onConfirm={async () => {
+          const { action, payload } = confirmState;
+          setConfirmState({ open: false, action: null, payload: null });
+          if (action === "clearAll") {
+            await clearAllMissions();
+          } else if (action === "deleteOne" && payload) {
+            await deleteMission(payload);
+          }
+        }}
       />
     </div>
   );
