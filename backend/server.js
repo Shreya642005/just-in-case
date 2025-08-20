@@ -14,15 +14,12 @@ app.use(express.json());
 const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 
-const missionRoutes = require('./routes/missionRoutes');
-app.use('/api/missions', missionRoutes);
+const missionRoutes = require("./routes/missionRoutes");
+app.use("/api/missions", missionRoutes);
 
-
-// Connect to MongoDB (Updated - removed deprecated options)
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// Connect to MongoDB (clean version)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
     app.listen(PORT, () => {
